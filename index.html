@@ -389,7 +389,7 @@
         </div>
 
         <div id="gameArea">
-            <canvas id="gameCanvas" width="320" height="480"></canvas>
+            <canvas id="gameCanvas"></canvas>
 
             <div id="startOverlay" class="game-overlay visible">
                 <p id="startText" style="animation: none;">Yükleniyor...</p>
@@ -436,6 +436,15 @@
 
             const canvas = document.getElementById('gameCanvas');
             const ctx = canvas.getContext('2d');
+            
+            // Yüksek Çözünürlüklü Ekranlar (Retina) İçin Canvas Optimizasyonu
+            const canvasWidth = 320;
+            const canvasHeight = 480;
+            const dpr = window.devicePixelRatio || 1;
+            canvas.width = canvasWidth * dpr;
+            canvas.height = canvasHeight * dpr;
+            ctx.scale(dpr, dpr);
+
             const startOverlay = document.getElementById('startOverlay');
             const startText = document.getElementById('startText');
             const dragHand = document.getElementById('dragHand');
@@ -499,8 +508,8 @@
 
             let basketWidth = 75; 
             let basketHeight = 75; 
-            let basketStartX = canvas.width / 2 - basketWidth / 2;
-            let basketStartY = canvas.height - basketHeight - 15; 
+            let basketStartX = canvasWidth / 2 - basketWidth / 2;
+            let basketStartY = canvasHeight - basketHeight - 15; 
             let score = 0;
             const WIN_SCORE = 100;
             const PRODUCT_SCORE = 20;
@@ -524,11 +533,10 @@
 
             let swipeStartX = 0;
             let swipeStartY = 0;
-            const SWIPE_THRESHOLD = 50; 
             let baseItemSpawnInterval = 1000; 
             let lastItemSpawnTime = 0; 
 
-            const laneXPositions = [25, (canvas.width / 2) - 25, canvas.width - 75];
+            const laneXPositions = [25, (canvasWidth / 2) - 25, canvasWidth - 75];
 
             let areIntroListenersActive = false;
             let areGameListenersActive = false;
@@ -779,9 +787,9 @@
                 if (basket.x < 0) { 
                     basket.x = 0; 
                     basket.targetX = 0;
-                } else if (basket.x + basket.width > canvas.width) { 
-                    basket.x = canvas.width - basket.width; 
-                    basket.targetX = canvas.width - basket.width;
+                } else if (basket.x + basket.width > canvasWidth) { 
+                    basket.x = canvasWidth - basket.width; 
+                    basket.targetX = canvasWidth - basket.width;
                 }
 
                 for (let i = gameElements.length - 1; i >= 0; i--) {
@@ -823,10 +831,10 @@
                         continue; 
                     }
 
-                    if (element.y > canvas.height) {
+                    if (element.y > canvasHeight) {
                         if (!isIntroScreen && !gameOver && element.type === 'product') {
                             score -= 5;
-                            animatedScores.push({x: element.x + element.width/2, y: canvas.height - 30, text: "-5", color: '#FF4136', size: 20, speedY: 2, alpha: 1});
+                            animatedScores.push({x: element.x + element.width/2, y: canvasHeight - 30, text: "-5", color: '#FF4136', size: 20, speedY: 2, alpha: 1});
                             updateScoreAndProgressBar();
                         }
                         gameElements.splice(i, 1); 
@@ -851,11 +859,11 @@
                 if(!isAssetsLoaded) return; 
                 if(e.cancelable) e.preventDefault(); 
                 if (isIntroScreen) {
-                    swipeStartX = (e.clientX || (e.touches && e.touches[0].clientX));
-                    swipeStartY = (e.clientY || (e.touches && e.touches[0].clientY));
+                    trackEvent('Oyun_Baslatildi');
+                    startGameLogic();
                     isDraggingGame = true; 
-                    startOverlay.classList.add('grabbing'); 
-                    lastMouseX = swipeStartX;
+                    canvas.classList.add('grabbing');
+                    lastMouseX = (e.clientX || (e.touches && e.touches[0].clientX)); 
                 } else if (!gameOver) { 
                     isDraggingGame = true;
                     canvas.classList.add('grabbing');
@@ -864,13 +872,9 @@
             }
 
             function handleInteractionEnd(e) {
-                if (isIntroScreen) { 
-                    trackEvent('Oyun_Baslatildi'); startGameLogic(); 
-                } 
-                
-                isDraggingGame = false; 
-                if (isIntroScreen) startOverlay.classList.remove('grabbing'); 
-                else canvas.classList.remove('grabbing'); 
+                isDraggingGame = false;
+                if (isIntroScreen) startOverlay.classList.remove('grabbing');
+                else canvas.classList.remove('grabbing');
             }
 
             function handleInteractionMove(e) {
@@ -891,7 +895,7 @@
             }
 
             function gameLoop() {
-                ctx.clearRect(0, 0, canvas.width, canvas.height);
+                ctx.clearRect(0, 0, canvasWidth, canvasHeight);
                 update(); 
                 drawBasket(); 
                 drawAnimatedScores();
