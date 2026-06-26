@@ -437,7 +437,6 @@
             const canvas = document.getElementById('gameCanvas');
             const ctx = canvas.getContext('2d');
             
-            // Yüksek Çözünürlüklü Ekranlar (Retina) İçin Canvas Optimizasyonu
             const canvasWidth = 320;
             const canvasHeight = 480;
             const dpr = window.devicePixelRatio || 1;
@@ -524,7 +523,7 @@
             };
             
             let gameElements = []; 
-            let gameSpeed = 2;
+            let gameSpeed = 2.5; 
             let gameOver = false; 
             let isIntroScreen = true; 
             let isDraggingGame = false; 
@@ -573,7 +572,7 @@
                         copyFeedback.classList.add('show');
                         trackEvent('Kupon_Kopyalandi');
                     } catch (err) {
-                        console.error('Kopyalama başarısız', err);
+                        console.error(err);
                     }
                     document.body.removeChild(el);
                 });
@@ -662,7 +661,7 @@
                     animationType: null, animationCurrentFrame: 0, animationDuration: 20
                 };
                 gameElements = []; 
-                gameSpeed = 2;
+                gameSpeed = 2.5; 
                 gameOver = false; 
                 isIntroScreen = false; 
                 isDraggingGame = false; 
@@ -809,7 +808,7 @@
                         } else { 
                             scoreChange = PRODUCT_SCORE;
                             text = `+${PRODUCT_SCORE}`;
-                            color = '#0e3f7f';
+                            color = '#fbbc3a';
                             basket.animationType = 'bonus';
                         }
                         basket.animationCurrentFrame = basket.animationDuration;
