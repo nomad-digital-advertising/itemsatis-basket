@@ -1,0 +1,913 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Collect to Basket Game</title>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700;800;900&display=swap" rel="stylesheet">
+
+    <script>
+        var clickTag = "https://www.itemsatis.com/l/4ZLmzMAY"; 
+    </script>
+
+    <style>
+        body {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            background-color: #f0f4f8; 
+            margin: 0;
+            font-family: 'Poppins', sans-serif;
+            overflow: hidden;
+        }
+
+        #outerCreativeWrapper {
+            width: 320px;
+            height: 480px;
+            display: flex;
+            flex-direction: column;
+            background-color: #ffffff;
+            overflow: hidden;
+            border: none;
+            position: relative;
+        }
+
+        #logoContainer {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 64px;
+            text-align: center;
+            padding: 5px 0;
+            background-color: transparent;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 10;
+            pointer-events: none;
+        }
+        
+        #logoContainer img {
+            pointer-events: auto;
+            max-height: 28px;
+            width: auto;
+            cursor: pointer;
+        }
+
+        #gameArea {
+            height: 100%;
+            position: relative;
+            overflow: hidden;
+            flex-grow: 1;
+            z-index: 1;
+        }
+
+        canvas {
+            display: block;
+            width: 100%;
+            height: 100%;
+            background-image: url('https://imagedelivery.net/Tf7axrLBN3rVtGpHgUHaRA/2baab50b-0f54-48ba-f541-55a1feee2800/public');
+            background-size: cover;
+            background-position: center;
+            cursor: grab;
+            touch-action: none;
+        }
+        
+        canvas.grabbing {
+            cursor: grabbing;
+        }
+        
+        .game-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            color: white;
+            font-size: 1.5rem;
+            text-align: center;
+            visibility: hidden;
+            opacity: 0;
+            transition: visibility 0.0s, opacity 0.5s linear;
+            z-index: 10;
+            box-sizing: border-box;
+        }
+        
+        #startOverlay {
+            background-color: rgba(0, 0, 0, 0.4);
+            pointer-events: auto;
+            -webkit-user-select: none;
+            -moz-user-select: none;
+            user-select: none;
+        }
+        
+        #startText {
+            font-size: 0.95rem;
+            margin-top: -60px;
+            position: relative;
+            transform: translateY(-50%);
+            line-height: 1.6;
+            background: linear-gradient(135deg, rgba(255,255,255,0.95), rgba(240,240,240,0.85));
+            color: #223143;
+            padding: 10px 18px;
+            border-radius: 20px;
+            font-weight: bold;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+            border: 2px solid rgba(255,255,255,1);
+            white-space: nowrap;
+        }
+
+        @keyframes textBlink {
+            0%, 100% { opacity: 1; transform: translateY(-50%) scale(1); }
+            50% { opacity: 0.7; transform: translateY(-50%) scale(0.96); }
+        }
+        
+        #dragHand {
+            position: absolute;
+            bottom: 70px;
+            left: 50%;
+            transform-origin: center center;
+            animation: smoothSwipe 2.5s infinite ease-in-out;
+            width: 70px;
+            height: auto;
+            filter: drop-shadow(0px 8px 6px rgba(0,0,0,0.4));
+        }
+
+        @keyframes smoothSwipe {
+            0% { transform: translateX(80px); opacity: 0; }
+            20% { opacity: 1; transform: translateX(40px); }
+            80% { opacity: 1; transform: translateX(-40px); }
+            100% { transform: translateX(-80px); opacity: 0; }
+        }
+
+        #gameOverlay {
+            background-color: rgba(0, 0, 0, 0.75);
+            pointer-events: auto;
+            justify-content: flex-end;
+            padding-bottom: 50px;
+        }
+
+        .game-overlay.visible {
+            visibility: visible;
+            opacity: 1;
+        }
+
+        .glass-panel {
+            background: rgba(255, 255, 255, 0.15);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.4);
+            border-radius: 16px;
+            padding: 20px 15px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.25);
+            text-align: center;
+            width: 80%;
+            margin-bottom: 25px;
+        }
+
+        .coupon-box {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            background: rgba(255, 255, 255, 0.95);
+            padding: 8px 15px;
+            border-radius: 8px;
+            cursor: pointer;
+            border: 2px dashed #0e3f7f;
+            margin-bottom: 4px;
+            transition: all 0.3s ease;
+        }
+
+        .coupon-box:hover {
+            background: #fff;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 10px rgba(0,0,0,0.15);
+        }
+
+        .coupon-code {
+            color: #0e3f7f;
+            font-weight: 900;
+            font-size: 1.4rem;
+            letter-spacing: 2px;
+        }
+
+        .glass-panel p {
+            color: #ffffff;
+            font-size: 15.5px;
+            line-height: 1.6;
+            margin: 20px 0 0 0;
+            font-weight: 600;
+            text-shadow: 1px 1px 2px rgba(0,0,0,0.5);
+        }
+
+        #copyFeedback {
+            color: #fbbc3a;
+            font-size: 13px;
+            font-weight: 800;
+            font-family: 'Poppins', sans-serif;
+            max-height: 0;
+            opacity: 0;
+            margin-bottom: 0;
+            overflow: hidden;
+            transition: all 0.3s ease;
+        }
+
+        #copyFeedback.show {
+            max-height: 20px;
+            opacity: 1;
+            margin-bottom: 0px;
+        }
+
+        .highlight {
+            position: relative;
+            z-index: 1;
+            white-space: nowrap;
+            color: #0e3f7f;
+            font-weight: 800;
+            padding: 0 4px;
+            text-shadow: none;
+        }
+        
+        .highlight::after {
+            content: '';
+            position: absolute;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            top: 0;
+            height: 100%;
+            background-color: #fbbc3a;
+            z-index: -1;
+            border-radius: 4px;
+        }
+
+        .action-buttons-wrapper {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 20px;
+            width: 100%;
+        }
+
+        .cta-btn {
+            display: inline-flex; align-items: center; justify-content: center; gap: 8px;
+            position: relative; padding: 12px 35px;
+            background: linear-gradient(135deg, #0e3f7f 0%, #08264d 100%);
+            color: #fff; text-decoration: none; font-weight: 800; font-size: 14px;
+            text-transform: uppercase; letter-spacing: 1px;
+            border-radius: 8px; border: none; cursor: pointer;
+            box-shadow: 0 4px 15px rgba(14, 63, 127, 0.4);
+            overflow: hidden; pointer-events: auto;
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+        }
+
+        .cta-btn::before {
+            content: ''; position: absolute; top: 0; left: -100%;
+            width: 50%; height: 100%;
+            background: linear-gradient(to right, rgba(255,255,255,0) 0%, rgba(255,255,255,0.4) 50%, rgba(255,255,255,0) 100%);
+            transform: skewX(-25deg);
+            z-index: 1;
+        }
+
+        .cta-btn span { position: relative; z-index: 2; font-family: 'Poppins', sans-serif; }
+
+        .cta-btn:hover { transform: translateY(-2px); box-shadow: 0 6px 18px rgba(14, 63, 127, 0.6); }
+        .cta-btn:hover::before { animation: shine 0.7s forwards; }
+        .cta-btn:active { transform: translateY(2px); }
+
+        @keyframes shine {
+            100% { left: 200%; }
+        }
+        
+        .pulse-anim { animation: premium-pulse 2s infinite; }
+        .pulse-anim:hover { animation: none; }
+
+        @keyframes premium-pulse {
+            0% { box-shadow: 0 0 0 0 rgba(14, 63, 127, 0.7); }
+            50% { box-shadow: 0 0 0 12px rgba(14, 63, 127, 0); }
+            100% { box-shadow: 0 0 0 0 rgba(14, 63, 127, 0); }
+        }
+
+        .restart-btn {
+            padding: 0; 
+            width: 45px; 
+            height: 45px; 
+            border-radius: 50%;
+            background: linear-gradient(135deg, #0e3f7f 0%, #08264d 100%);
+            box-shadow: 0 4px 15px rgba(14, 63, 127, 0.5);
+            display: flex; 
+            align-items: center; 
+            justify-content: center;
+            border: none; 
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        
+        .restart-btn svg {
+            width: 22px; 
+            height: 22px; 
+            transition: transform 0.5s ease-in-out, stroke 0.3s ease;
+            transform-origin: center;
+        }
+        
+        .restart-btn:hover { 
+            background: linear-gradient(135deg, #1555a3 0%, #0e3f7f 100%);
+            box-shadow: 0 6px 20px rgba(251, 188, 58, 0.4);
+            transform: translateY(-2px);
+        }
+        
+        .restart-btn:hover svg { 
+            transform: rotate(-180deg); 
+            stroke: #fbbc3a; 
+        }
+
+        #progressBarContainer {
+            position: absolute;
+            top: 75px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 260px;
+            height: 25px;
+            background-color: rgba(255, 255, 255, 0.5);
+            border-radius: 5px;
+            overflow: hidden;
+            z-index: 5;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+            display: none;
+            display: flex;
+            align-items: center;
+        }
+        
+        #progressBarFill {
+            width: 0%;
+            height: 100%;
+            background-color: #fbbc3a;
+            transition: width 0.3s ease;
+        }
+
+        #scoreText {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            color: #0e3f7f;
+            font-weight: 800;
+            font-size: 1rem;
+            text-shadow: 1px 1px 2px rgba(255, 255, 255, 0.5);
+            z-index: 6;
+            font-family: 'Poppins', sans-serif;
+        }
+
+        .animated-score {
+            position: absolute;
+            color: #fbbc3a;
+            font-weight: 800;
+            font-size: 1.2rem;
+            animation: fadeOutUp 1s forwards;
+            pointer-events: none;
+            text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.4);
+            font-family: 'Poppins', sans-serif;
+        }
+
+        @keyframes fadeOutUp {
+            from { opacity: 1; transform: translateY(0); }
+            to { opacity: 0; transform: translateY(-50px); }
+        }
+    </style>
+</head>
+<body>
+    <div id="outerCreativeWrapper">
+        <div id="logoContainer">
+            <img src="https://imagedelivery.net/Tf7axrLBN3rVtGpHgUHaRA/bccb8e5f-d8a5-4649-9b4b-1e92e9aa1600/public" alt="Logo">
+        </div>
+
+        <div id="gameArea">
+            <canvas id="gameCanvas" width="320" height="480"></canvas>
+
+            <div id="startOverlay" class="game-overlay visible">
+                <p id="startText" style="animation: none;">Yükleniyor...</p>
+                <img id="dragHand" src="https://imagedelivery.net/Tf7axrLBN3rVtGpHgUHaRA/80edcdb8-c9a5-41ec-b9e2-cce4cf461c00/public" class="drag-hand" alt="Kaydır" style="display: none;">
+            </div>
+            
+            <div id="progressBarContainer">
+                <div id="progressBarFill"></div>
+                <span id="scoreText">0 / %100</span>
+            </div>
+
+            <div id="gameOverlay" class="game-overlay">
+                
+                <div class="glass-panel">
+                    <div class="coupon-box" id="couponBox" title="Kopyalamak için tıkla">
+                        <span class="coupon-code">TATİL26</span>
+                        <svg class="copy-icon" fill="none" stroke="#0e3f7f" stroke-width="2.5" viewBox="0 0 24 24" width="22" height="22" xmlns="http://www.w3.org/2000/svg">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"></path>
+                        </svg>
+                    </div>
+                    <div id="copyFeedback">Kopyalandı!</div>
+                    <p><span class="highlight">Yeni üyelere</span> özel 200 TL Üzeri ilk alışverişinde geçerli <span class="highlight">15 TL indirim!</span></p>
+                </div>
+                
+                <div class="action-buttons-wrapper">
+                    <button class="restart-btn" id="restartButton" title="Tekrar Oyna">
+                        <svg fill="none" stroke="#ffffff" stroke-width="2.5" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2V15"></path>
+                        </svg>
+                    </button>
+                    
+                    <button class="cta-btn pulse-anim" id="banvitWebsiteButton"><span>KEŞFET!</span></button>
+                </div>
+
+            </div>
+        </div>
+    </div>
+
+    <script>
+        window.onload = function() {
+            function trackEvent(actionName) {
+                console.log("EVENT TRIGGERED: ", actionName);
+            }
+
+            const canvas = document.getElementById('gameCanvas');
+            const ctx = canvas.getContext('2d');
+            const startOverlay = document.getElementById('startOverlay');
+            const startText = document.getElementById('startText');
+            const dragHand = document.getElementById('dragHand');
+            const gameOverlay = document.getElementById('gameOverlay');
+            const restartButton = document.getElementById('restartButton'); 
+            const banvitWebsiteButton = document.getElementById('banvitWebsiteButton');
+            const logoContainer = document.getElementById('logoContainer');
+            const progressBarContainer = document.getElementById('progressBarContainer');
+            const progressBarFill = document.getElementById('progressBarFill');
+            const scoreText = document.getElementById('scoreText');
+            const couponBox = document.getElementById('couponBox');
+            const copyFeedback = document.getElementById('copyFeedback');
+
+            let isAssetsLoaded = false;
+            let loadedImgsCount = 0;
+
+            const fallingImageUrls = [
+                "https://imagedelivery.net/Tf7axrLBN3rVtGpHgUHaRA/cc737099-1c23-4c83-216e-c489b6ceb800/public",
+                "https://imagedelivery.net/Tf7axrLBN3rVtGpHgUHaRA/18207b38-8fe6-48ad-7741-7a2d2b50c900/public",
+                "https://imagedelivery.net/Tf7axrLBN3rVtGpHgUHaRA/956f6814-27c6-4d79-36d5-9cdff3963d00/public",
+                "https://imagedelivery.net/Tf7axrLBN3rVtGpHgUHaRA/89bfabe5-45b3-42cc-428c-1290374dba00/public",
+                "https://imagedelivery.net/Tf7axrLBN3rVtGpHgUHaRA/0ade1d30-637e-4605-4cf3-6569393aae00/public",
+                "https://imagedelivery.net/Tf7axrLBN3rVtGpHgUHaRA/2d584b40-7fca-4b25-7ddd-48d6bfae3e00/public",
+                "https://imagedelivery.net/Tf7axrLBN3rVtGpHgUHaRA/15b5a3d8-fd0a-4931-d49d-e6824bb48a00/public",
+                "https://imagedelivery.net/Tf7axrLBN3rVtGpHgUHaRA/8d8efc4e-f111-4c0e-10e7-ac2b3a552e00/public",
+                "https://imagedelivery.net/Tf7axrLBN3rVtGpHgUHaRA/4e296685-38e9-4c7a-9e4a-2d897ba64700/public",
+                "https://imagedelivery.net/Tf7axrLBN3rVtGpHgUHaRA/7886ece3-94d3-4da8-04e1-a1bdbef1ca00/public",
+                "https://imagedelivery.net/Tf7axrLBN3rVtGpHgUHaRA/9a7f6b4b-f205-4e57-a4a3-c30481858d00/public"
+            ];
+            
+            const totalImgsToLoad = fallingImageUrls.length + 2; 
+
+            function checkPreload() {
+                loadedImgsCount++;
+                if (loadedImgsCount >= totalImgsToLoad) {
+                    isAssetsLoaded = true;
+                    startText.innerHTML = "<span class='highlight'>Kupon kodu</span> kazanmak için<br><span class='highlight'>oynamaya başla!</span>";
+                    startText.style.animation = "textBlink 1.8s infinite ease-in-out";
+                    dragHand.style.display = "block";
+                }
+            }
+
+            const loadedFallingImages = [];
+            fallingImageUrls.forEach(url => {
+                const img = new Image();
+                img.onload = checkPreload;
+                img.onerror = checkPreload;
+                img.src = url;
+                loadedFallingImages.push(img);
+            });
+
+            const basketImg = new Image();
+            basketImg.onload = checkPreload;
+            basketImg.onerror = checkPreload;
+            basketImg.src = "https://imagedelivery.net/Tf7axrLBN3rVtGpHgUHaRA/59383ce9-9dc0-4554-0d54-998756e4c600/public";
+            
+            const bombImg = new Image();
+            bombImg.onload = checkPreload;
+            bombImg.onerror = checkPreload;
+            bombImg.src = "https://imagedelivery.net/Tf7axrLBN3rVtGpHgUHaRA/c8bf9579-f88a-4e15-e5b5-854aaaef9500/public";
+
+            let basketWidth = 75; 
+            let basketHeight = 75; 
+            let basketStartX = canvas.width / 2 - basketWidth / 2;
+            let basketStartY = canvas.height - basketHeight - 15; 
+            let score = 0;
+            const WIN_SCORE = 100;
+            const PRODUCT_SCORE = 20;
+            const BOMB_SCORE_LOSS = 10;
+            let animatedScores = []; 
+            
+            let basket = {
+                x: basketStartX, y: basketStartY,
+                width: basketWidth, height: basketHeight,
+                targetX: basketStartX,
+                animationType: null, animationCurrentFrame: 0, animationDuration: 20
+            };
+            
+            let gameElements = []; 
+            let gameSpeed = 2;
+            let gameOver = false; 
+            let isIntroScreen = true; 
+            let isDraggingGame = false; 
+            let lastMouseX; 
+            let animationFrameId; 
+
+            let swipeStartX = 0;
+            let swipeStartY = 0;
+            const SWIPE_THRESHOLD = 50; 
+            let baseItemSpawnInterval = 1000; 
+            let lastItemSpawnTime = 0; 
+
+            const laneXPositions = [25, (canvas.width / 2) - 25, canvas.width - 75];
+
+            let areIntroListenersActive = false;
+            let areGameListenersActive = false;
+
+            setupGame();
+
+            function setupGame() {
+                restartButton.addEventListener('click', () => {
+                    trackEvent('Yeniden_Baslat_Tiklandi');
+                    startGameLogic();
+                });
+
+                banvitWebsiteButton.addEventListener('click', () => {
+                    trackEvent('Kesfet_Tiklandi');
+                    window.open(clickTag, '_blank');
+                });
+                
+                logoContainer.addEventListener('click', () => {
+                    trackEvent('Logo_Tiklandi');
+                    window.open(clickTag, '_blank');
+                });
+                
+                couponBox.addEventListener('click', function() {
+                    const textToCopy = 'TATİL26';
+                    const el = document.createElement('textarea');
+                    el.value = textToCopy;
+                    el.setAttribute('readonly', '');
+                    el.style.position = 'absolute';
+                    el.style.left = '-9999px';
+                    document.body.appendChild(el);
+                    el.select();
+                    try {
+                        document.execCommand('copy');
+                        copyFeedback.classList.add('show');
+                        trackEvent('Kupon_Kopyalandi');
+                    } catch (err) {
+                        console.error('Kopyalama başarısız', err);
+                    }
+                    document.body.removeChild(el);
+                });
+
+                prePopulateIntroElements();
+                addIntroInputListeners();
+                startOverlay.classList.add('visible');
+                gameLoop();
+            }
+
+            function updateScoreAndProgressBar() {
+                score = Math.max(0, Math.min(WIN_SCORE, score));
+                const progressPercentage = (score / WIN_SCORE) * 100;
+                progressBarFill.style.width = progressPercentage + '%';
+                scoreText.textContent = `${score} / %${WIN_SCORE}`;
+            }
+
+            function addGameInputListeners() {
+                if (areGameListenersActive) return; 
+                canvas.addEventListener('mousedown', handleInteractionStart);
+                canvas.addEventListener('mouseup', handleInteractionEnd);
+                canvas.addEventListener('mousemove', handleInteractionMove);
+                canvas.addEventListener('mouseleave', handleInteractionEnd);
+                canvas.addEventListener('touchstart', handleInteractionStart, {passive: false});
+                canvas.addEventListener('touchend', handleInteractionEnd, {passive: false});
+                canvas.addEventListener('touchmove', handleInteractionMove, {passive: false});
+                canvas.addEventListener('touchcancel', handleInteractionCancel, {passive: false});
+                areGameListenersActive = true;
+            }
+
+            function removeGameInputListeners() {
+                if (!areGameListenersActive) return;
+                canvas.removeEventListener('mousedown', handleInteractionStart);
+                canvas.removeEventListener('mouseup', handleInteractionEnd);
+                canvas.removeEventListener('mousemove', handleInteractionMove);
+                canvas.removeEventListener('mouseleave', handleInteractionEnd);
+                canvas.removeEventListener('touchstart', handleInteractionStart);
+                canvas.removeEventListener('touchend', handleInteractionEnd);
+                canvas.removeEventListener('touchmove', handleInteractionMove);
+                canvas.removeEventListener('touchcancel', handleInteractionCancel);
+                areGameListenersActive = false;
+            }
+
+            function addIntroInputListeners() {
+                if (areIntroListenersActive) return; 
+                startOverlay.addEventListener('mousedown', handleInteractionStart);
+                startOverlay.addEventListener('mouseup', handleInteractionEnd);
+                startOverlay.addEventListener('mousemove', handleInteractionMove);
+                startOverlay.addEventListener('mouseleave', handleInteractionEnd);
+                startOverlay.addEventListener('touchstart', handleInteractionStart, {passive: false});
+                startOverlay.addEventListener('touchend', handleInteractionEnd, {passive: false});
+                startOverlay.addEventListener('touchmove', handleInteractionMove, {passive: false});
+                startOverlay.addEventListener('touchcancel', handleInteractionCancel, {passive: false});
+                areIntroListenersActive = true;
+            }
+
+            function removeIntroInputListeners() {
+                if (!areIntroListenersActive) return;
+                startOverlay.removeEventListener('mousedown', handleInteractionStart);
+                startOverlay.removeEventListener('mouseup', handleInteractionEnd);
+                startOverlay.removeEventListener('mousemove', handleInteractionMove);
+                startOverlay.removeEventListener('mouseleave', handleInteractionEnd);
+                startOverlay.removeEventListener('touchstart', handleInteractionStart);
+                startOverlay.removeEventListener('touchend', handleInteractionEnd);
+                startOverlay.removeEventListener('touchmove', handleInteractionMove);
+                startOverlay.removeEventListener('touchcancel', handleInteractionCancel);
+                areIntroListenersActive = false;
+            }
+
+            function prePopulateIntroElements() {
+                const initialY = -100;
+                const randomIndex = Math.floor(Math.random() * laneXPositions.length);
+                const x = laneXPositions[randomIndex];
+                
+                const randomImg = loadedFallingImages[Math.floor(Math.random() * loadedFallingImages.length)];
+                gameElements.push({ x, y: initialY, width: 50, height: 50, type: 'product', img: randomImg });
+            }
+
+            function startGameLogic() {
+                score = 0; 
+                updateScoreAndProgressBar();
+                basket = {
+                    x: basketStartX, y: basketStartY,
+                    width: basketWidth, height: basketHeight, 
+                    targetX: basketStartX,
+                    animationType: null, animationCurrentFrame: 0, animationDuration: 20
+                };
+                gameElements = []; 
+                gameSpeed = 2;
+                gameOver = false; 
+                isIntroScreen = false; 
+                isDraggingGame = false; 
+                gameOverlay.classList.remove('visible'); 
+                startOverlay.classList.remove('visible'); 
+                copyFeedback.classList.remove('show');
+                removeIntroInputListeners();
+                addGameInputListeners();
+                canvas.classList.remove('grabbing'); 
+                progressBarContainer.style.display = 'flex';
+                
+                lastItemSpawnTime = performance.now(); 
+                generateGameElement(); 
+                
+                if (animationFrameId) cancelAnimationFrame(animationFrameId);
+                gameLoop(); 
+            }
+
+            function drawBasket() {
+                ctx.save();
+                if (basketImg.complete && basketImg.naturalWidth > 0) {
+                    ctx.drawImage(basketImg, basket.x, basket.y, basket.width, basket.height);
+                } else {
+                    ctx.font = '60px Poppins';
+                    ctx.textAlign = 'center';
+                    ctx.textBaseline = 'middle';
+                    ctx.fillText('🧺', basket.x + basket.width / 2, basket.y + basket.height / 2);
+                }
+
+                if (basket.animationType) {
+                    const progress = (basket.animationDuration - basket.animationCurrentFrame) / basket.animationDuration;
+                    const alpha = basket.animationCurrentFrame / basket.animationDuration; 
+                    const effectSize = Math.max(basket.width, basket.height) * 0.8; 
+
+                    if (basket.animationType === 'bonus') {
+                        ctx.fillStyle = `rgba(255, 223, 0, ${alpha})`; 
+                        ctx.beginPath();
+                        ctx.arc(basket.x + basket.width / 2, basket.y + basket.height / 2, effectSize * progress, 0, Math.PI * 2);
+                        ctx.fill();
+                    } else if (basket.animationType === 'bomb') {
+                        ctx.fillStyle = `rgba(255, 0, 0, ${alpha})`; 
+                        ctx.beginPath();
+                        ctx.arc(basket.x + basket.width / 2, basket.y + basket.height / 2, effectSize, 0, Math.PI * 2);
+                        ctx.fill();
+                    }
+                }
+                ctx.restore(); 
+            }
+
+            function drawGameElement(element) {
+                ctx.save();
+                ctx.fillStyle = 'rgba(0, 0, 0, 0.15)';
+                ctx.beginPath();
+                ctx.ellipse(
+                    element.x + element.width / 2, 
+                    element.y + element.height + 5, 
+                    element.width * 0.4, element.height * 0.1,
+                    0, 0, Math.PI * 2
+                );
+                ctx.fill();
+                ctx.restore(); 
+                
+                if (element.type === 'bomb') {
+                    if (bombImg.complete && bombImg.naturalWidth > 0) {
+                        ctx.drawImage(bombImg, element.x, element.y, element.width, element.height);
+                    } else {
+                        ctx.font = '45px Poppins'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+                        ctx.fillText('💣', element.x + element.width / 2, element.y + element.height / 2);
+                    }
+                } else {
+                    if (element.img && element.img.complete && element.img.naturalWidth > 0) {
+                        ctx.drawImage(element.img, element.x, element.y, element.width, element.height);
+                    } else {
+                        ctx.fillStyle = '#fbbc3a';
+                        ctx.beginPath();
+                        ctx.arc(element.x + element.width / 2, element.y + element.height / 2, element.width / 2, 0, Math.PI * 2);
+                        ctx.fill();
+                    }
+                }
+            }
+
+            function drawAnimatedScores() {
+                animatedScores.forEach((s, index) => {
+                    ctx.fillStyle = s.color;
+                    ctx.font = `${s.size}px Poppins`;
+                    ctx.textAlign = 'center';
+                    ctx.fillText(s.text, s.x, s.y);
+                    s.y -= s.speedY;
+                    s.alpha -= 0.02; 
+                    if (s.alpha <= 0) animatedScores.splice(index, 1);
+                });
+            }
+            
+            function generateGameElement() {
+                const randomIndex = Math.floor(Math.random() * laneXPositions.length);
+                const x = laneXPositions[randomIndex];
+                const y = -100 - (Math.random() * 20);
+                const width = 50;
+                const height = 50;
+                const adjustedX = x + (50 - width) / 2;
+
+                if (Math.random() > 0.3) {
+                    const randomImg = loadedFallingImages[Math.floor(Math.random() * loadedFallingImages.length)];
+                    gameElements.push({ x: adjustedX, y, width, height, type: 'product', img: randomImg });
+                } else {
+                    gameElements.push({ x: adjustedX, y, width, height, type: 'bomb' });
+                }
+            }
+
+            function checkElementCollision(basket, element) {
+                const basketCenterX = basket.x + basket.width / 2;
+                const basketCenterY = basket.y + basket.height / 2;
+                const elementCenterX = element.x + element.width / 2;
+                const elementCenterY = element.y + element.height / 2;
+                const distanceX = Math.abs(basketCenterX - elementCenterX);
+                const distanceY = Math.abs(basketCenterY - elementCenterY);
+                return distanceX < (basket.width / 2 + element.width / 2) * 0.6 && distanceY < (basket.height / 2 + element.height / 2) * 0.6;
+            }
+
+            function update() {
+                basket.x += (basket.targetX - basket.x) * 0.35; 
+                if (basket.x < 0) { 
+                    basket.x = 0; 
+                    basket.targetX = 0;
+                } else if (basket.x + basket.width > canvas.width) { 
+                    basket.x = canvas.width - basket.width; 
+                    basket.targetX = canvas.width - basket.width;
+                }
+
+                for (let i = gameElements.length - 1; i >= 0; i--) {
+                    const element = gameElements[i];
+                    element.y += gameSpeed; 
+
+                    if (!isIntroScreen && !gameOver && checkElementCollision(basket, element)) { 
+                        let scoreChange = 0;
+                        let text = "";
+                        let color = "";
+
+                        if (element.type === 'bomb') {
+                            scoreChange = -BOMB_SCORE_LOSS;
+                            text = `-${BOMB_SCORE_LOSS}`;
+                            color = '#FF4136';
+                            basket.animationType = 'bomb';
+                        } else { 
+                            scoreChange = PRODUCT_SCORE;
+                            text = `+${PRODUCT_SCORE}`;
+                            color = '#0e3f7f';
+                            basket.animationType = 'bonus';
+                        }
+                        basket.animationCurrentFrame = basket.animationDuration;
+                        animatedScores.push({x: element.x + element.width/2, y: element.y, text, color, size: 20, speedY: 2, alpha: 1});
+                        
+                        score += scoreChange;
+                        updateScoreAndProgressBar();
+                        gameElements.splice(i, 1); 
+                        
+                        if (score >= WIN_SCORE) {
+                            gameOver = true;
+                            trackEvent('Oyun_Bitirildi');
+                            gameOverlay.classList.add('visible');
+                            canvas.classList.remove('grabbing');
+                            progressBarContainer.style.display = 'none';
+                            cancelAnimationFrame(animationFrameId); 
+                            return;
+                        }
+                        continue; 
+                    }
+
+                    if (element.y > canvas.height) {
+                        if (!isIntroScreen && !gameOver && element.type === 'product') {
+                            score -= 5;
+                            animatedScores.push({x: element.x + element.width/2, y: canvas.height - 30, text: "-5", color: '#FF4136', size: 20, speedY: 2, alpha: 1});
+                            updateScoreAndProgressBar();
+                        }
+                        gameElements.splice(i, 1); 
+                        if (isIntroScreen && gameElements.length === 0) prePopulateIntroElements();
+                    }
+                }
+
+                if (!isIntroScreen && !gameOver) {
+                    const currentTime = performance.now();
+                    const currentSpawnInterval = baseItemSpawnInterval / (gameSpeed / 2); 
+                    if (currentTime - lastItemSpawnTime > currentSpawnInterval) {
+                        generateGameElement();
+                        lastItemSpawnTime = currentTime;
+                    }
+                }
+                
+                if (basket.animationType && basket.animationCurrentFrame > 0) basket.animationCurrentFrame--;
+                else if (basket.animationType && basket.animationCurrentFrame <= 0) basket.animationType = null; 
+            }
+
+            function handleInteractionStart(e) {
+                if(!isAssetsLoaded) return; 
+                if(e.cancelable) e.preventDefault(); 
+                if (isIntroScreen) {
+                    swipeStartX = (e.clientX || (e.touches && e.touches[0].clientX));
+                    swipeStartY = (e.clientY || (e.touches && e.touches[0].clientY));
+                    isDraggingGame = true; 
+                    startOverlay.classList.add('grabbing'); 
+                    lastMouseX = swipeStartX;
+                } else if (!gameOver) { 
+                    isDraggingGame = true;
+                    canvas.classList.add('grabbing');
+                    lastMouseX = (e.clientX || (e.touches && e.touches[0].clientX)); 
+                }
+            }
+
+            function handleInteractionEnd(e) {
+                if (isIntroScreen) { 
+                    const currentX = (e.clientX || (e.changedTouches && e.changedTouches[0] && e.changedTouches[0].clientX));
+                    const currentY = (e.clientY || (e.changedTouches && e.changedTouches[0] && e.changedTouches[0].clientY));
+                    if (currentX === undefined || currentY === undefined) return; 
+
+                    const deltaX = currentX - swipeStartX;
+                    const deltaY = currentY - swipeStartY;
+
+                    if (Math.abs(deltaX) > SWIPE_THRESHOLD && Math.abs(deltaY) < SWIPE_THRESHOLD) {
+                        trackEvent('Oyun_Baslatildi');
+                        startGameLogic(); 
+                    }
+                } 
+                isDraggingGame = false;
+                if (isIntroScreen) startOverlay.classList.remove('grabbing');
+                else canvas.classList.remove('grabbing');
+            }
+
+            function handleInteractionMove(e) {
+                if (!isDraggingGame) return; 
+                if(e.cancelable) e.preventDefault(); 
+                const currentMouseX = (e.clientX || (e.touches && e.touches[0].clientX));
+                const deltaX = currentMouseX - lastMouseX; 
+                
+                basket.targetX += deltaX * 1.05; 
+                
+                lastMouseX = currentMouseX; 
+            }
+            
+            function handleInteractionCancel(e) {
+                isDraggingGame = false;
+                if (isIntroScreen) startOverlay.classList.remove('grabbing');
+                else canvas.classList.remove('grabbing');
+            }
+
+            function gameLoop() {
+                ctx.clearRect(0, 0, canvas.width, canvas.height);
+                update(); 
+                drawBasket(); 
+                drawAnimatedScores();
+                gameElements.forEach(drawGameElement);
+                if (!gameOver) animationFrameId = requestAnimationFrame(gameLoop);
+            }
+        };
+    </script>
+</body>
+</html>
