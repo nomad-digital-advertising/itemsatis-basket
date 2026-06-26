@@ -865,21 +865,12 @@
 
             function handleInteractionEnd(e) {
                 if (isIntroScreen) { 
-                    const currentX = (e.clientX || (e.changedTouches && e.changedTouches[0] && e.changedTouches[0].clientX));
-                    const currentY = (e.clientY || (e.changedTouches && e.changedTouches[0] && e.changedTouches[0].clientY));
-                    if (currentX === undefined || currentY === undefined) return; 
-
-                    const deltaX = currentX - swipeStartX;
-                    const deltaY = currentY - swipeStartY;
-
-                    if (Math.abs(deltaX) > SWIPE_THRESHOLD && Math.abs(deltaY) < SWIPE_THRESHOLD) {
-                        trackEvent('Oyun_Baslatildi');
-                        startGameLogic(); 
-                    }
+                    trackEvent('Oyun_Baslatildi'); startGameLogic(); 
                 } 
-                isDraggingGame = false;
-                if (isIntroScreen) startOverlay.classList.remove('grabbing');
-                else canvas.classList.remove('grabbing');
+                
+                isDraggingGame = false; 
+                if (isIntroScreen) startOverlay.classList.remove('grabbing'); 
+                else canvas.classList.remove('grabbing'); 
             }
 
             function handleInteractionMove(e) {
